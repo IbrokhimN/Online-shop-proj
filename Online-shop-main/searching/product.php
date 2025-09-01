@@ -1,62 +1,48 @@
 <?php
-session_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once __DIR__ . '/config.php';
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "product_db";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Ошибка подключения: " . $conn->connect_error);
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($id <= 0) {
+    http_response_code(400); exit('Bad request');
 }
 
-if (isset($_GET['id'])) {
-    $id = $conn->real_escape_string($_GET['id']);
 
-    $sql = "SELECT * FROM products WHERE id = '$id'";
-    $result = $conn->query($sql);
+$stmt = $mysqli->prepare('SELECT id, name, description, price, image_url FROM products WHERE id = ?');
+$stmt->bind_param('i', $id);
+$stmt->execute();
+$product = $stmt->get_result()->fetch_assoc();
 
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $productName = $row['name'];
-        $productDescription = $row['description'];
-        $productPrice = $row['price'];
-        $productImageUrl = $row['image_url'];
-    } else {
-        die("Продукт не найден.");
+//404
+
+if (!$product) {
+    http_response_code(404); echo 'Not found'; exit;
+}
+
+$productName      = $product['name'];
+$productDescription = $product['description'];
+$productPrice     = $product['price'];
+$productImageUrl  = $product['image_url'];
+
+//Обработка формы комментария (только для залогиненных)
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SESSION['username'])) {
+    $comment = trim($_POST['comment'] ?? '');
+    if ($comment !== '') {
+        $stmt = $mysqli->prepare('INSERT INTO comments (product_id, username, comment) VALUES (?, ?, ?)');
+        $stmt->bind_param('iss', $id, $_SESSION['username'], $comment);
+        $stmt->execute();
     }
-} else {
-    die("Неверный запрос.");
+    header('Location: product.php?id=' . $id);
+    exit;
 }
 
-// Обработка формы добавления комментария
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['username'])) {
-    $comment = $conn->real_escape_string($_POST['comment']);
-    $username = $_SESSION['username'];
-    $product_id = $id;
+//Список комментариев
 
-    $stmt = $conn->prepare("INSERT INTO comments (product_id, username, comment) VALUES (?, ?, ?)");
-    $stmt->bind_param("iss", $product_id, $username, $comment);
-
-    if ($stmt->execute()) {
-        header("Location: product.php?id=$id");
-        exit();
-    } else {
-        echo "Ошибка: " . $stmt->error;
-    }
-
-    $stmt->close();
-}
-
-// Получение комментариев для продукта
-$comments_sql = "SELECT * FROM comments WHERE product_id = '$id' ORDER BY created_at DESC";
-$comments_result = $conn->query($comments_sql);
-
-$conn->close();
+$stmt = $mysqli->prepare('SELECT username, comment, created_at FROM comments WHERE product_id = ? ORDER BY created_at DESC');
+$stmt->bind_param('i', $id);
+$stmt->execute();
+$comments_result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
