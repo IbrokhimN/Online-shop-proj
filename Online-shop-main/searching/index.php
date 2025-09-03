@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/config.php';
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -14,9 +15,9 @@ if ($conn->connect_error) {
     die("Ошибка подключения: " . $conn->connect_error);
 }
 
-// Функция для обрезки текста описания до указанной длины символов
+// Функция для обрезки текста описания до указанной длины 
 function truncate_description($text, $length) {
-    // Убираем возможные теги HTML
+    
     $text = strip_tags($text);
 
     // Если длина текста меньше или равна заданной длине, возвращаем текст как есть
@@ -179,3 +180,5 @@ $result = $conn->query($sql);
 <?php
 $conn->close();
 ?>
+
+

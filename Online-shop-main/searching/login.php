@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/config.php';
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -43,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 $conn->close();
 ?>
-
+// HTML Starts here
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -69,3 +70,4 @@ $conn->close();
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></script>
 </body>
 </html>
+
